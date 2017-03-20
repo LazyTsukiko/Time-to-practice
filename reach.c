@@ -1,3 +1,9 @@
+/*
+* File: reach.c
+* Author: Siyi Jiang
+* Purpose: This program involves writing code to solve this problem for any given (directed) input graph.
+*/
+
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
@@ -49,7 +55,7 @@ int opN(char *name)
 {
 	if (checkName(name) != 0)
 	{
-		fprintf(stderr, "ERROR [addNode]: Node %s already exists", name);
+		fprintf(stderr, "ERROR [addNode]: Node %s already exists\n", name);
 		return 1;
 	}
 
@@ -97,13 +103,13 @@ int opE(char *name1, char *name2)
 
 	if (temp == NULL)
 	{
-		fprintf(stderr, "ERROR [createEdge]: no such node %s", name1);
+		fprintf(stderr, "ERROR [createEdge]: no such node %s\n", name1);
 		return 1;
 	}
 
-	if (checkName(name2))
+	if (checkName(name2) == 0)
 	{
-		fprintf(stderr, "ERROR [createEdge]: no such node %s", name2);
+		fprintf(stderr, "ERROR [createEdge]: no such node %s\n", name2);
 		return 1;
 	}
 
@@ -141,7 +147,7 @@ struct nameList *searchList(struct nameList *temp, char *name)
 
 	if (temp->next == NULL)
 	{
-		fprintf(stderr, "ERROR : no such node %s", name);
+		fprintf(stderr, "ERROR: node %s not found\n", name);
 		return temp->next;
 	}
 
@@ -156,7 +162,7 @@ void searchNode(struct node *temp, char *name)
 {
 	int pathExists = 0;
 
-	if (temp->next == NULL)
+	if (temp == NULL)
 	{
 		printf("%d\n", pathExists);
 		return;
@@ -188,7 +194,7 @@ int opQ(char *name1, char *name2)
 
 	if (!checkName(name2))
 	{
-		fprintf(stderr, "ERROR : no such node %s", name2);
+		fprintf(stderr, "ERROR: node %s not found\n", name2);
 		return 1;
 	}
 	
@@ -226,18 +232,60 @@ void freeList(struct nameList *temp)
 	return;
 }
 
-int main(void)
+int main(int argc, char *argv[])
 {
+	char *read = NULL;
+	int hasFile = 0;
+	FILE *fp;
+
+	if (argc >= 2)
+	{
+		hasFile = 1;
+
+		if (access(argv[1], 0) == -1)
+		{
+			fprintf(stderr, "%s: No such file or directory\n", argv[1]);
+			return 1;
+		}
+
+		if (access(argv[1], 4) == -1)
+		{
+			fprintf(stderr, "%s: Permission denied\n", argv[1]);
+			return 1;
+		}
+
+		fp = fopen(argv[1], "r");	
+	}
+
 	char *line = NULL;
 	size_t size;
-	int error = 0;
+	int res, error = 0;
 	
-	while (getline(&line, &size, stdin) >= 0)
+	while (1)
 	{
+		if (hasFile)
+		{
+			if ((res = getline(&line, &size, fp)) == -1)
+				break;
+		}
+		else
+		{
+			if ((res = getline(&line, &size, stdin)) == -1)
+				break;
+		}
+
 		char *p;
 		p = line;
-		int len = strlen(line);
-		char op[5];
+		char op[3];
+		char c = NULL;
+
+		while ((res = sscanf(p, "%c", &c)) != -1)
+		{
+			if (c != ' ')
+				break;
+
+			p++;
+		}
 
 		if (sscanf(p, "%[^ ]", op) == -1)
 		{
@@ -245,90 +293,117 @@ int main(void)
 			error = 1;
 			continue;
 		}
-		
-		p += 3;
 
 		if (strcmp(op, "@n") == 0)
 		{
 			char *name;
 			name = malloc(65 * sizeof(char));
-			if (sscanf(p, "%64s", name) == -1)
+
+			if (sscanf(p, "%*[@n]%*[ ]%64s", name) == -1)
 			{
 				fprintf(stderr, "ERROR: malformed input %s", line);
 				error = 1;
+				free(name);
 				continue;
 			}
 
-			char checkLine[65];
-			if (sscanf(p, "%64s", checkLine) != -1)
+			char *checkLine;
+			checkLine = malloc(65 * sizeof(char));
+			if (sscanf(p, "%*[@n]%*[ ]%*64s%*[ ]%s[^\n]", checkLine) >= 1)
 			{
 				fprintf(stderr, "ERROR: malformed input %s", line);
 				error = 1;
+				free(name);
+				free(checkLine);
 				continue;
 			}
+
+			free(checkLine);
 
 			if (opN(name))
+			{
+				free(name);
 				error = 1;
+			}
+
 			continue;
 		}
 
 		if (strcmp(op, "@e") == 0)
 		{
-			char name1[65], name2[65];
-			if (sscanf(p, "%64s", name1) == EOF)
-			{
-				fprintf(stderr, "ERROR: malformed input %s", line);
-				error = 1;
-				continue;
-			}
+			char *name1, *name2;
+			name1 = malloc(65 * sizeof(char));
+			name2 = malloc(65 * sizeof(char));
 			
-			if (sscanf(p, "%64s", name2) == EOF)
+			if (sscanf(p, "%*[@e]%*[ ]%64s%*[ ]%64s", name1, name2) == -1)
 			{
 				fprintf(stderr, "ERROR: malformed input %s", line);
+				free(name1);
+				free(name2);
 				error = 1;
 				continue;
 			}
 
-			char *checkLine = NULL;
-			if (sscanf(p, "%s", checkLine) != EOF)
+			char *checkLine;
+			checkLine = malloc(65 * sizeof(char));
+
+			if (sscanf(p, "%*[@e]%*[ ]%*64s%*[ ]%*64s%*[ ]%s[^\n]", checkLine) >= 1)
 			{
 				fprintf(stderr, "ERROR: malformed input %s", line);
 				error = 1;
+				free(name1);
+				free(name2);
+				free(checkLine);
 				continue;
 			}
+
+			free(checkLine);
 
 			if (opE(name1, name2))
+			{
+				free(name2);
 				error = 1;
+			}
+
+			free(name1);
+			
 			continue;
 		}
 
 		if (strcmp(op, "@q") == 0)
 		{
-			char name1[65], name2[65];
-			if (sscanf(p, "%64s", name1) == EOF)
+			char *name1, *name2;
+			name1 = malloc(65 * sizeof(char));
+			name2 = malloc(65 * sizeof(char));
+			if (sscanf(p, "%*[@q]%*[ ]%64s%*[ ]%64s", name1, name2) == -1)
 			{
 				fprintf(stderr, "ERROR: malformed input %s", line);
+				free(name1);
+				free(name2);
 				error = 1;
 				continue;
 			}
 
-			if (sscanf(p, "%64s", name2) == EOF)
+			char *checkLine;
+			checkLine = malloc(65 * sizeof(char));
+
+			if (sscanf(p, "%*[@q]%*[ ]%*64s%*[ ]%*64s%*[ ]%s[^\n]", checkLine) >= 1)
 			{
 				fprintf(stderr, "ERROR: malformed input %s", line);
+				free(name1);
+				free(name2);
+				free(checkLine);
 				error = 1;
 				continue;
 			}
 
-			char *checkLine = NULL;
-			if (sscanf(p, "%s", checkLine) != EOF)
-			{
-				fprintf(stderr, "ERROR: malformed input %s", line);
-				error = 1;
-				continue;
-			}
+			free(checkLine);
 
 			if (opQ(name1, name2))
 				error = 1;
+
+			free(name1);
+			free(name2);
 			continue;
 		}
 
@@ -336,7 +411,10 @@ int main(void)
 		error = 1;
 	}
 
+	free(line);
 	freeList(head);
+	if (hasFile)
+		fclose(fp);
 
 	return error;
 }
