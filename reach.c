@@ -2,7 +2,7 @@
 * File: reach.c
 * Author: LazyTsukiko
 * Purpose: This program involves writing code to solve this problem for any given (directed) input graph.
-* =========Still some problems in this project, output was not correct.
+* =========Still some problems in this project, output was not correct============
 */
 
 #include <stdio.h>
