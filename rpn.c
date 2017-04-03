@@ -1,6 +1,6 @@
 /*
 * File: rpn.c
-* Author: Siyi Jiang
+* Author: LazyTsukiko
 * Purpose: This program is a calculator that evaluates expressions in Reverse Polish notation.
 */
 
