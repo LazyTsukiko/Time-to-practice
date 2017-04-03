@@ -1,3 +1,2 @@
 # Time-to-practice
-Testing repository
-Start work
+Upload assignment files.
